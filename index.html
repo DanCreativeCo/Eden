@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Eden Family · Bastrop, Texas</title>
+  <meta name="description" content="A farm-to-table family of places in Bastrop, Texas — Storehouse Market & Eatery, Eden East Farms, and Soil to Table." />
+
+  <!-- Fonts: Oswald (condensed display) + Inter (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet (interactive map, no API key) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Inline SVG favicon: a small seed/leaf mark -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230A0A0A'/%3E%3Cpath d='M16 6c5 3 7 7 7 11a7 7 0 0 1-14 0c0-4 2-8 7-11z' fill='%239C5B3B'/%3E%3Cline x1='16' y1='10' x2='16' y2='24' stroke='%23FAF8F4' stroke-width='1.2'/%3E%3C/svg%3E" />
+</head>
+<body>
+
+  <!-- 1 · Announcement bar -->
+  <div class="announce">
+    <span>✦</span>&nbsp;&nbsp;A Farm-to-Table Family · Bastrop, Texas&nbsp;&nbsp;<span>✦</span>
+  </div>
+
+  <!-- Minimal nav -->
+  <header class="nav">
+    <a class="nav__mark" href="#top">The&nbsp;Eden&nbsp;Family</a>
+    <nav class="nav__links">
+      <a href="#story">Our Story</a>
+      <a href="#places">The Places</a>
+      <a href="#map">Visit</a>
+    </nav>
+  </header>
+
+  <!-- 2 · Hero -->
+  <section class="hero" id="top">
+    <p class="hero__eyebrow">Bastrop · Texas · Est. on good soil</p>
+    <h1 class="hero__mark">The&nbsp;Eden<br />Family</h1>
+    <p class="hero__sub">Grown, gathered &amp; served with care.</p>
+    <a class="btn" href="#map">— Explore Our Places —</a>
+
+    <div class="hero__strip" aria-hidden="true">
+      <span style="background-image:url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=80')"></span>
+      <span style="background-image:url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&q=80')"></span>
+      <span style="background-image:url('https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=600&q=80')"></span>
+      <span style="background-image:url('https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=600&q=80')"></span>
+    </div>
+  </section>
+
+  <!-- 3 · Brand story -->
+  <section class="story" id="story">
+    <p class="label">— Our Story —</p>
+    <h2 class="story__head">Three places. One table.</h2>
+    <div class="story__cols">
+      <p>What began as a single farm has grown into a small family of places, all rooted in the same belief: that good food starts in good soil, and that a community is fed by more than what's on the plate.</p>
+      <p>From a working farm just outside town, to a market and eatery on Main Street, to the hands that help other growers do the same — each place is its own, yet they share one philosophy, one source, and one family behind them.</p>
+    </div>
+  </section>
+
+  <!-- 4 · Map -->
+  <section class="mapwrap" id="map">
+    <div class="mapwrap__head">
+      <p class="label">— Find Us —</p>
+      <h2 class="story__head">Around Bastrop</h2>
+    </div>
+    <div id="leaflet" role="application" aria-label="Map of our three locations around Bastrop, Texas"></div>
+  </section>
+
+  <!-- 5 · Location cards (rendered from script.js) -->
+  <section class="places" id="places">
+    <p class="label">— The Places —</p>
+    <div class="cards" id="cards"><!-- injected by script.js --></div>
+  </section>
+
+  <!-- 6 · Footer -->
+  <footer class="foot">
+    <p class="foot__mark">The Eden Family</p>
+    <p class="foot__meta">Bastrop, Texas · A farm-to-table family</p>
+    <p class="foot__social"><a href="#">Instagram</a> · <a href="#">Facebook</a></p>
+    <p class="foot__copy">© <span id="year"></span> The Eden Family. All rights reserved.</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="script.js"></script>
+</body>
+</html>
