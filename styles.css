@@ -205,69 +205,121 @@ a { color: inherit; }
 .story__cols p { margin: 0; color: #2c2c2c; }
 
 /* ============================================================
-   4 · Map
+   4 · Map — hand-drawn doodle
    ============================================================ */
 .mapwrap {
   background: var(--paper);
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  padding: 80px 0 0;
+  padding: 80px 0 70px;
 }
 .mapwrap__head { text-align: center; padding: 0 28px; }
-#leaflet {
-  height: 460px;
+.mapwrap__note {
+  font-size: 15px;
+  color: var(--muted);
+  font-style: italic;
+  margin: -22px 0 0;
+}
+
+#doodlemap {
+  max-width: 880px;
+  margin: 42px auto 0;
+  padding: 0 28px;
+}
+.doodle-svg {
+  display: block;
   width: 100%;
-  margin-top: 50px;
-  border-top: 1px solid var(--line);
-  z-index: 0;
+  height: auto;
+  overflow: visible;
 }
 
-/* custom numbered pin */
-.pin {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  box-shadow: 0 3px 8px rgba(0,0,0,.3);
-  border: 2px solid #fff;
+/* sketchy paper frame + decorations (muted ink, like pencil) */
+.doodle-frame {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 2;
+  stroke-dasharray: 2 7;
+  stroke-linecap: round;
 }
-.pin span {
-  transform: rotate(45deg);
+.doodle-river {
+  fill: none;
+  stroke: #C7D2D6;
+  stroke-width: 2.5;
+  stroke-dasharray: 1 9;
+  stroke-linecap: round;
+}
+.doodle-tree path { fill: var(--accent-2); opacity: .85; }
+.doodle-tree line { stroke: #8a7a63; stroke-width: 2.5; stroke-linecap: round; }
+
+.doodle-compass circle { fill: none; stroke: var(--muted); stroke-width: 1.6; }
+.doodle-compass path   { fill: var(--accent); }
+.doodle-compass text {
+  fill: var(--muted);
   font-family: var(--display);
   font-weight: 600;
-  color: #fff;
-  font-size: 14px;
-}
-.pin--active { animation: pulse 1.2s ease infinite; }
-@keyframes pulse {
-  0%,100% { box-shadow: 0 3px 8px rgba(0,0,0,.3); }
-  50%     { box-shadow: 0 3px 8px rgba(0,0,0,.3), 0 0 0 8px rgba(156,91,59,.18); }
-}
-
-/* leaflet popup, restyled to match brand */
-.leaflet-popup-content-wrapper {
-  border-radius: 4px;
-  font-family: var(--body);
-}
-.leaflet-popup-content { margin: 14px 16px; }
-.popup__name {
-  font-family: var(--display);
-  text-transform: uppercase;
+  font-size: 12px;
+  text-anchor: middle;
   letter-spacing: .1em;
-  font-weight: 600;
-  font-size: 14px;
-  margin: 0 0 4px;
 }
-.popup__type {
+
+/* the dashed "trail" between places — the line dashes */
+.doodle-trail {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  stroke-dasharray: 9 9;
+  stroke-linecap: round;
+  opacity: .55;
+}
+
+/* hand-lettered place name */
+.doodle-place {
+  fill: var(--muted);
   font-family: var(--display);
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: .16em;
-  font-size: 10px;
-  margin: 0 0 6px;
+  letter-spacing: .22em;
+  font-size: 13px;
+  text-anchor: middle;
 }
-.popup__addr { font-size: 12px; color: var(--muted); margin: 0; }
+
+/* doodle pins */
+.doodle-pin {
+  cursor: default;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  transition: transform .25s ease;
+}
+.doodle-pin__drop {
+  stroke: #fff;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.22));
+}
+.doodle-pin__dot { fill: #fff; }
+.doodle-pin__num {
+  fill: var(--accent, var(--ink));
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.doodle-pin__ring {
+  fill: none;
+  stroke: var(--accent, var(--ink));
+  stroke-width: 2;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.doodle-pin:hover { transform: scale(1.12); }
+.doodle-pin--active { transform: scale(1.12); }
+.doodle-pin--active .doodle-pin__ring { animation: ringPulse 1.3s ease infinite; }
+@keyframes ringPulse {
+  0%   { opacity: .5; transform: scale(.6); }
+  70%  { opacity: 0;  transform: scale(1.4); }
+  100% { opacity: 0;  transform: scale(1.4); }
+}
 
 /* ============================================================
    5 · Location cards
@@ -387,9 +439,9 @@ a { color: inherit; }
   /* tighter vertical rhythm so a phone isn't all whitespace */
   .hero { padding-top: 44px; }
   .story { padding: 70px 24px 60px; }
-  .mapwrap { padding-top: 60px; }
+  .mapwrap { padding: 60px 0 56px; }
   .places { padding: 70px 24px 64px; }
-  #leaflet { height: 380px; margin-top: 38px; }
+  #doodlemap { margin-top: 32px; padding: 0 20px; }
 }
 
 @media (max-width: 480px) {

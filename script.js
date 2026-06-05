@@ -49,43 +49,97 @@ const LOCATIONS = [
 ];
 
 /* ------------------------------------------------------------------
-   Map
+   Doodle map
+   A hand-drawn SVG sketch instead of a heavy interactive tile map.
+   Pins are placed from the real lat/lng (so the layout stays honest)
+   and joined by dashed "trail" lines you can follow between places.
    ------------------------------------------------------------------ */
-const map = L.map('leaflet', { scrollWheelZoom: false }).setView([30.118, -97.31], 12);
+const MAP_W = 760, MAP_H = 440, PAD_X = 150, PAD_Y = 120;
 
-// Soft, low-contrast tiles so the brand colors of the pins stand out.
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap &copy; CARTO',
-  maxZoom: 19,
-}).addTo(map);
+// Project a location's lat/lng into the SVG canvas.
+const lats = LOCATIONS.map(l => l.lat);
+const lngs = LOCATIONS.map(l => l.lng);
+const latMin = Math.min(...lats), latMax = Math.max(...lats);
+const lngMin = Math.min(...lngs), lngMax = Math.max(...lngs);
+const lngSpan = (lngMax - lngMin) || 1;
+const latSpan = (latMax - latMin) || 1;
 
-// Build a pin DivIcon colored per location.
-function makePin(loc, index) {
-  return L.divIcon({
-    className: '',
-    html: `<div class="pin" data-pin="${loc.id}" style="background:${loc.accentColor}">
-             <span>${index + 1}</span>
-           </div>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -32],
-  });
+function project(loc) {
+  const x = PAD_X + ((loc.lng - lngMin) / lngSpan) * (MAP_W - 2 * PAD_X);
+  const y = PAD_Y + ((latMax - loc.lat) / latSpan) * (MAP_H - 2 * PAD_Y); // north = up
+  return { x, y };
 }
 
-const markers = {};
-LOCATIONS.forEach((loc, i) => {
-  const marker = L.marker([loc.lat, loc.lng], { icon: makePin(loc, i) })
-    .addTo(map)
-    .bindPopup(`
-      <p class="popup__type" style="color:${loc.accentColor}">${loc.type}</p>
-      <p class="popup__name">${loc.name}</p>
-      <p class="popup__addr">${loc.address}</p>
-    `);
-  markers[loc.id] = marker;
-});
+// A gently bowed quadratic curve between two points — reads as hand-drawn.
+function trail(a, b, bow = 26) {
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const cx = mx + (-dy / len) * bow;
+  const cy = my + ( dx / len) * bow;
+  return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
+}
 
-// Fit the map nicely to all three pins.
-map.fitBounds(LOCATIONS.map(l => [l.lat, l.lng]), { padding: [60, 60] });
+// A doodle teardrop pin whose tip sits exactly on (x, y).
+function pinSvg(loc, index) {
+  const { x, y } = project(loc);
+  const cy = y - 27; // centre of the pin's round head
+  return `
+    <g class="doodle-pin" data-pin="${loc.id}" style="--accent:${loc.accentColor}">
+      <circle class="doodle-pin__ring" cx="${x}" cy="${y}" r="22" />
+      <path class="doodle-pin__drop"
+            d="M ${x} ${y}
+               C ${x - 13} ${y - 18}, ${x - 15} ${y - 34}, ${x} ${y - 40}
+               C ${x + 15} ${y - 34}, ${x + 13} ${y - 18}, ${x} ${y} Z"
+            fill="${loc.accentColor}" />
+      <circle class="doodle-pin__dot" cx="${x}" cy="${cy}" r="11" />
+      <text class="doodle-pin__num" x="${x}" y="${cy}">${index + 1}</text>
+    </g>`;
+}
+
+// Build the trail: connect the places west-to-east so the path reads naturally.
+const route = [...LOCATIONS].sort((a, b) => a.lng - b.lng).map(project);
+const trails = route.slice(1)
+  .map((p, i) => `<path class="doodle-trail" d="${trail(route[i], p, i % 2 ? -26 : 26)}" />`)
+  .join('');
+
+const pins = LOCATIONS.map((loc, i) => pinSvg(loc, i)).join('');
+
+document.getElementById('doodlemap').innerHTML = `
+  <svg viewBox="0 0 ${MAP_W} ${MAP_H}" class="doodle-svg" role="presentation"
+       preserveAspectRatio="xMidYMid meet">
+    <!-- sketchy frame -->
+    <rect class="doodle-frame" x="14" y="14" width="${MAP_W - 28}" height="${MAP_H - 28}" rx="10" />
+
+    <!-- a winding river dash for flavour -->
+    <path class="doodle-river" d="M 40 96 C 150 60, 230 150, 330 110 S 560 60, 720 130" />
+
+    <!-- compass rose -->
+    <g class="doodle-compass" transform="translate(${MAP_W - 70} 78)">
+      <circle r="22" />
+      <path d="M 0 -16 L 6 0 L 0 16 L -6 0 Z" />
+      <text x="0" y="-28">N</text>
+    </g>
+
+    <!-- little tree doodles -->
+    <g class="doodle-tree" transform="translate(96 350)">
+      <path d="M 0 0 L -12 22 L 12 22 Z M 0 12 L -16 36 L 16 36 Z" />
+      <line x1="0" y1="36" x2="0" y2="46" />
+    </g>
+    <g class="doodle-tree" transform="translate(660 320) scale(.85)">
+      <path d="M 0 0 L -12 22 L 12 22 Z M 0 12 L -16 36 L 16 36 Z" />
+      <line x1="0" y1="36" x2="0" y2="46" />
+    </g>
+
+    <!-- the dashed trail between places -->
+    ${trails}
+
+    <!-- the pins -->
+    ${pins}
+
+    <!-- hand-lettered place name -->
+    <text class="doodle-place" x="${MAP_W / 2}" y="${MAP_H - 30}">~ Bastrop, Texas ~</text>
+  </svg>`;
 
 /* ------------------------------------------------------------------
    Cards — rendered from the same LOCATIONS array
@@ -114,22 +168,22 @@ cardsEl.innerHTML = LOCATIONS.map((loc) => {
 }).join('');
 
 /* ------------------------------------------------------------------
-   Interaction: hovering a card highlights its map pin; clicking a
-   card flies the map to that location and opens its popup.
+   Interaction: hovering a card highlights its doodle pin; clicking a
+   card scrolls up to the map and makes that pin pulse.
    ------------------------------------------------------------------ */
-function pinEl(id) { return document.querySelector(`.pin[data-pin="${id}"]`); }
+function pinEl(id) { return document.querySelector(`.doodle-pin[data-pin="${id}"]`); }
 
 document.querySelectorAll('.card').forEach((card) => {
   const id = card.dataset.card;
 
-  card.addEventListener('mouseenter', () => pinEl(id)?.classList.add('pin--active'));
-  card.addEventListener('mouseleave', () => pinEl(id)?.classList.remove('pin--active'));
+  card.addEventListener('mouseenter', () => pinEl(id)?.classList.add('doodle-pin--active'));
+  card.addEventListener('mouseleave', () => pinEl(id)?.classList.remove('doodle-pin--active'));
 
   card.addEventListener('click', (e) => {
     if (e.target.closest('a')) return;            // let real links work
-    const loc = LOCATIONS.find(l => l.id === id);
-    map.flyTo([loc.lat, loc.lng], 14, { duration: 0.8 });
-    markers[id].openPopup();
+    document.querySelectorAll('.doodle-pin--active')
+      .forEach(p => p.classList.remove('doodle-pin--active'));
+    pinEl(id)?.classList.add('doodle-pin--active');
     document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 });
