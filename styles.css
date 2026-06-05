@@ -32,6 +32,8 @@ body {
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;                          /* belt-and-suspenders against side scroll */
+  -webkit-tap-highlight-color: transparent;    /* no grey flash on tap */
 }
 
 a { color: inherit; }
@@ -373,9 +375,36 @@ a { color: inherit; }
    Responsive
    ============================================================ */
 @media (max-width: 820px) {
-  .nav__links { display: none; }
+  /* nav stacks: wordmark on top, links centered below (kept, not hidden) */
+  .nav { flex-direction: column; gap: 14px; padding: 20px 22px; }
+  .nav__links { gap: 24px; }
+
   .story__cols { grid-template-columns: 1fr; gap: 22px; }
   .cards { grid-template-columns: 1fr; }
   .hero__strip { grid-template-columns: repeat(2, 1fr); }
   .hero__strip span { height: 180px; }
+
+  /* tighter vertical rhythm so a phone isn't all whitespace */
+  .hero { padding-top: 44px; }
+  .story { padding: 70px 24px 60px; }
+  .mapwrap { padding-top: 60px; }
+  .places { padding: 70px 24px 64px; }
+  #leaflet { height: 380px; margin-top: 38px; }
+}
+
+@media (max-width: 480px) {
+  body { font-size: 16px; }
+  .announce { font-size: 10px; letter-spacing: .16em; }
+  .nav__links { gap: 16px; }
+  .nav__links a { font-size: 11px; }
+  .hero__sub { font-size: 16px; }
+  .hero__strip { gap: 8px; }
+  .hero__strip span { height: 150px; }
+
+  /* roomier tap targets on the cards (min ~44px tall) */
+  .card__links { gap: 8px; }
+  .card__link { padding: 12px 16px; }
+  .btn { padding: 15px 26px; }
+
+  .foot { padding: 56px 24px 48px; }
 }
