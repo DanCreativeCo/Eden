@@ -35,10 +35,15 @@
 
   <!-- 2 · Hero -->
   <section class="hero" id="top">
-    <p class="hero__eyebrow">Bastrop · Texas · Est. on good soil</p>
-    <h1 class="hero__mark">The&nbsp;Eden<br />Family</h1>
-    <p class="hero__sub">Grown, gathered &amp; served with care.</p>
-    <a class="btn" href="#map">— Explore Our Places —</a>
+    <div class="hero__copy">
+      <p class="hero__eyebrow">Bastrop · Texas · Est. on good soil</p>
+      <h1 class="hero__mark">The&nbsp;Eden<br />Family</h1>
+      <p class="hero__sub">A market, a farm, and a soil-to-table practice grown from the same table.</p>
+      <div class="hero__actions">
+        <a class="btn" href="#map">— Explore Our Places —</a>
+        <a class="btn btn--quiet" href="#story">Our Story</a>
+      </div>
+    </div>
 
     <div class="hero__strip" aria-hidden="true">
       <span style="background-image:url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=80')"></span>
@@ -46,12 +51,19 @@
       <span style="background-image:url('https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=600&q=80')"></span>
       <span style="background-image:url('https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=600&q=80')"></span>
     </div>
+
+    <div class="hero__ledger" aria-label="Eden family summary">
+      <span><strong>01</strong> Main Street market</span>
+      <span><strong>02</strong> Working farm</span>
+      <span><strong>03</strong> Soil practice</span>
+    </div>
   </section>
 
   <!-- 3 · Brand story -->
   <section class="story" id="story">
     <p class="label">— Our Story —</p>
     <h2 class="story__head">Three places. One table.</h2>
+    <p class="story__lede">Eden is built as a small ecosystem: food grown with care, gathered with intention, and served in the middle of town.</p>
     <div class="story__cols">
       <p>What began as a single farm has grown into a small family of places, all rooted in the same belief: that good food starts in good soil, and that a community is fed by more than what's on the plate.</p>
       <p>From a working farm just outside town, to a market and eatery on Main Street, to the hands that help other growers do the same — each place is its own, yet they share one philosophy, one source, and one family behind them.</p>
@@ -63,14 +75,17 @@
     <div class="mapwrap__head">
       <p class="label">— Find Us —</p>
       <h2 class="story__head">Around Bastrop</h2>
-      <p class="mapwrap__note">A little hand-drawn guide to our three places — just follow the dashes.</p>
+      <p class="mapwrap__note">An illustrated guide to the three places that make up the Eden family.</p>
     </div>
     <div id="doodlemap" role="img" aria-label="Hand-drawn map of our three locations around Bastrop, Texas"><!-- injected by script.js --></div>
   </section>
 
   <!-- 5 · Location cards (rendered from script.js) -->
   <section class="places" id="places">
-    <p class="label">— The Places —</p>
+    <div class="places__head">
+      <p class="label">— The Places —</p>
+      <h2 class="story__head">Visit the family</h2>
+    </div>
     <div class="cards" id="cards"><!-- injected by script.js --></div>
   </section>
 

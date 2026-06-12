@@ -49,14 +49,15 @@ const LOCATIONS = [
 ];
 
 /* ------------------------------------------------------------------
-   Doodle map
-   A hand-drawn SVG sketch instead of a heavy interactive tile map.
-   Pins are placed from the real lat/lng (so the layout stays honest)
-   and joined by dashed "trail" lines you can follow between places.
+   Illustrated map
+   A bespoke, editorial map sketch — paper texture + vignette, a faint
+   graticule, a winding river, soft forest, topographic contours behind
+   each place, a "marching" trail you can follow, labelled markers, a
+   compass rose and a scale bar. Everything is drawn from the real
+   lat/lng so the geography stays honest, and it animates in on scroll.
    ------------------------------------------------------------------ */
-const MAP_W = 760, MAP_H = 440, PAD_X = 150, PAD_Y = 120;
+const MAP_W = 800, MAP_H = 540, PAD_X = 178, PAD_Y = 150;
 
-// Project a location's lat/lng into the SVG canvas.
 const lats = LOCATIONS.map(l => l.lat);
 const lngs = LOCATIONS.map(l => l.lng);
 const latMin = Math.min(...lats), latMax = Math.max(...lats);
@@ -64,96 +65,192 @@ const lngMin = Math.min(...lngs), lngMax = Math.max(...lngs);
 const lngSpan = (lngMax - lngMin) || 1;
 const latSpan = (latMax - latMin) || 1;
 
+// Project a location's lat/lng into the SVG canvas (north = up).
 function project(loc) {
   const x = PAD_X + ((loc.lng - lngMin) / lngSpan) * (MAP_W - 2 * PAD_X);
-  const y = PAD_Y + ((latMax - loc.lat) / latSpan) * (MAP_H - 2 * PAD_Y); // north = up
+  const y = PAD_Y + ((latMax - loc.lat) / latSpan) * (MAP_H - 2 * PAD_Y);
   return { x, y };
 }
+const r1 = n => Math.round(n * 10) / 10;
 
-// A gently bowed quadratic curve between two points — reads as hand-drawn.
-function trail(a, b, bow = 26) {
-  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-  const dx = b.x - a.x, dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const cx = mx + (-dy / len) * bow;
-  const cy = my + ( dx / len) * bow;
-  return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
+// Smooth Catmull-Rom path through the projected points → an elegant winding road.
+function smoothPath(pts) {
+  if (pts.length < 2) return '';
+  let d = `M ${r1(pts[0].x)} ${r1(pts[0].y)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i], p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${r1(c1x)} ${r1(c1y)} ${r1(c2x)} ${r1(c2y)} ${r1(p2.x)} ${r1(p2.y)}`;
+  }
+  return d;
 }
 
-// A doodle teardrop pin whose tip sits exactly on (x, y).
-function pinSvg(loc, index) {
+// Concentric elevation rings behind a pin — subtle topographic depth.
+function contours(loc) {
   const { x, y } = project(loc);
-  const cy = y - 27; // centre of the pin's round head
+  return [36, 26, 16].map((r, i) =>
+    `<circle class="map-contour" data-contour="${loc.id}" cx="${r1(x)}" cy="${r1(y)}" r="${r}"
+             style="--accent:${loc.accentColor};animation-delay:${0.15 + i * 0.1}s" />`
+  ).join('');
+}
+
+// A soft, rounded tree doodle (farm-country, not pine).
+function tree(tx, ty, s = 1) {
+  return `<g class="map-tree" transform="translate(${tx} ${ty}) scale(${s})">
+    <line class="map-tree__trunk" x1="0" y1="0" x2="0" y2="12" />
+    <path class="map-tree__top"
+          d="M0 -22 C 11 -23 15 -9 9 -3 C 15 -3 13 8 0 6 C -13 8 -15 -3 -9 -3 C -15 -9 -11 -23 0 -22 Z" />
+  </g>`;
+}
+
+// A refined map marker whose tip sits exactly on (x, y), with a labelled callout.
+function markerSvg(loc, index) {
+  const { x, y } = project(loc);
+  const headY = y - 31;
+  const right = x < MAP_W / 2;
+  const lx = right ? x + 24 : x - 24;
+  const anchor = right ? 'start' : 'end';
   return `
-    <g class="doodle-pin" data-pin="${loc.id}" style="--accent:${loc.accentColor}">
-      <circle class="doodle-pin__ring" cx="${x}" cy="${y}" r="22" />
-      <path class="doodle-pin__drop"
-            d="M ${x} ${y}
-               C ${x - 13} ${y - 18}, ${x - 15} ${y - 34}, ${x} ${y - 40}
-               C ${x + 15} ${y - 34}, ${x + 13} ${y - 18}, ${x} ${y} Z"
-            fill="${loc.accentColor}" />
-      <circle class="doodle-pin__dot" cx="${x}" cy="${cy}" r="11" />
-      <text class="doodle-pin__num" x="${x}" y="${cy}">${index + 1}</text>
+    <g class="map-marker" data-pin="${loc.id}" style="--accent:${loc.accentColor};--i:${index}">
+      <g class="map-marker__label">
+        <text class="map-label__name" x="${r1(lx)}" y="${r1(headY - 21)}" text-anchor="${anchor}">${loc.name}</text>
+        <text class="map-label__type" x="${r1(lx)}" y="${r1(headY - 7)}" text-anchor="${anchor}">${loc.type}</text>
+      </g>
+      <g class="map-marker__pin">
+        <ellipse class="map-marker__shadow" cx="${r1(x)}" cy="${r1(y + 3)}" rx="11" ry="3.5" />
+        <path class="map-marker__body"
+              d="M ${r1(x)} ${r1(y)}
+                 C ${r1(x - 14)} ${r1(y - 20)}, ${r1(x - 16)} ${r1(y - 38)}, ${r1(x)} ${r1(headY - 11)}
+                 C ${r1(x + 16)} ${r1(y - 38)}, ${r1(x + 14)} ${r1(y - 20)}, ${r1(x)} ${r1(y)} Z" />
+        <circle class="map-marker__disc" cx="${r1(x)}" cy="${r1(headY)}" r="11.5" />
+        <text class="map-marker__num" x="${r1(x)}" y="${r1(headY)}">${index + 1}</text>
+      </g>
     </g>`;
 }
 
-// Build the trail: connect the places west-to-east so the path reads naturally.
-const route = [...LOCATIONS].sort((a, b) => a.lng - b.lng).map(project);
-const trails = route.slice(1)
-  .map((p, i) => `<path class="doodle-trail" d="${trail(route[i], p, i % 2 ? -26 : 26)}" />`)
-  .join('');
+// Geometry shared by the template.
+const routePts  = [...LOCATIONS].sort((a, b) => a.lng - b.lng).map(project);
+const trailPath = smoothPath(routePts);
+const contoursAll = LOCATIONS.map(contours).join('');
+const markers   = LOCATIONS.map((loc, i) => markerSvg(loc, i)).join('');
 
-const pins = LOCATIONS.map((loc, i) => pinSvg(loc, i)).join('');
+// A faint surveyor's graticule.
+let grat = '';
+for (let gx = 110; gx < MAP_W - 60; gx += 95) grat += `<line class="map-grat" x1="${gx}" y1="26" x2="${gx}" y2="${MAP_H - 26}" />`;
+for (let gy = 100; gy < MAP_H - 60; gy += 95) grat += `<line class="map-grat" x1="26" y1="${gy}" x2="${MAP_W - 26}" y2="${gy}" />`;
+
+const trees = [[70, 360, 1.05], [104, 388, 0.78], [708, 398, 1], [672, 366, 0.8]]
+  .map(([tx, ty, s]) => tree(tx, ty, s)).join('');
 
 document.getElementById('doodlemap').innerHTML = `
   <svg viewBox="0 0 ${MAP_W} ${MAP_H}" class="doodle-svg" role="presentation"
        preserveAspectRatio="xMidYMid meet">
-    <!-- sketchy frame -->
-    <rect class="doodle-frame" x="14" y="14" width="${MAP_W - 28}" height="${MAP_H - 28}" rx="10" />
+    <defs>
+      <linearGradient id="edPaper" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fdfbf7" />
+        <stop offset="1" stop-color="#f2ebdd" />
+      </linearGradient>
+      <radialGradient id="edVignette" cx="50%" cy="44%" r="72%">
+        <stop offset="58%" stop-color="#000" stop-opacity="0" />
+        <stop offset="100%" stop-color="#5e4d35" stop-opacity="0.17" />
+      </radialGradient>
+      <linearGradient id="edRiver" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#c4d8dc" />
+        <stop offset="1" stop-color="#a3c0c9" />
+      </linearGradient>
+      <filter id="edShadow" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#3a2c1a" flood-opacity="0.30" />
+      </filter>
+      <filter id="edGrain">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="n" />
+        <feColorMatrix in="n" type="saturate" values="0" />
+      </filter>
+      <clipPath id="edClip"><rect x="22" y="22" width="${MAP_W - 44}" height="${MAP_H - 44}" rx="14" /></clipPath>
+    </defs>
 
-    <!-- a winding river dash for flavour -->
-    <path class="doodle-river" d="M 40 96 C 150 60, 230 150, 330 110 S 560 60, 720 130" />
+    <!-- paper bed + everything that lives "inside" the sheet -->
+    <g clip-path="url(#edClip)">
+      <rect x="22" y="22" width="${MAP_W - 44}" height="${MAP_H - 44}" fill="url(#edPaper)" />
+      ${grat}
+
+      <!-- a winding river + a little pond -->
+      <path class="map-river" d="M 24 122 C 168 78 252 198 360 150 S 602 70 ${MAP_W - 24} 184" />
+      <ellipse class="map-pond" cx="250" cy="408" rx="46" ry="25" />
+
+      <!-- soft forest -->
+      ${trees}
+
+      <!-- topographic contours behind each place -->
+      ${contoursAll}
+
+      <!-- the trail between places: a soft casing under a marching dash -->
+      <path class="map-trail__casing" d="${trailPath}" />
+      <path class="map-trail" d="${trailPath}" />
+
+      <!-- printed-paper grain + vignette -->
+      <rect class="map-grain" x="22" y="22" width="${MAP_W - 44}" height="${MAP_H - 44}" filter="url(#edGrain)" />
+      <rect x="22" y="22" width="${MAP_W - 44}" height="${MAP_H - 44}" fill="url(#edVignette)" />
+    </g>
+
+    <!-- double-line cartouche frame -->
+    <rect class="map-frame-outer" x="14" y="14" width="${MAP_W - 28}" height="${MAP_H - 28}" rx="18" />
+    <rect class="map-frame-inner" x="24" y="24" width="${MAP_W - 48}" height="${MAP_H - 48}" rx="11" />
+
+    <!-- markers + labels sit above the frame so callouts can breathe -->
+    ${markers}
 
     <!-- compass rose -->
-    <g class="doodle-compass" transform="translate(${MAP_W - 70} 78)">
-      <circle r="22" />
-      <path d="M 0 -16 L 6 0 L 0 16 L -6 0 Z" />
-      <text x="0" y="-28">N</text>
+    <g class="map-compass" transform="translate(${MAP_W - 66} 70)">
+      <circle class="map-compass__ring"  r="26" />
+      <circle class="map-compass__ring2" r="20" />
+      <path class="map-compass__star"  d="M0 -25 L5 -5 L25 0 L5 5 L0 25 L-5 5 L-25 0 L-5 -5 Z" />
+      <path class="map-compass__star2" d="M0 -14 L4 -4 L14 0 L4 4 L0 14 L-4 4 L-14 0 L-4 -4 Z" />
+      <text class="map-compass__n" x="0" y="-30">N</text>
     </g>
 
-    <!-- little tree doodles -->
-    <g class="doodle-tree" transform="translate(96 350)">
-      <path d="M 0 0 L -12 22 L 12 22 Z M 0 12 L -16 36 L 16 36 Z" />
-      <line x1="0" y1="36" x2="0" y2="46" />
+    <!-- scale bar -->
+    <g class="map-scale" transform="translate(58 ${MAP_H - 46})">
+      <line x1="0" y1="0" x2="84" y2="0" />
+      <line x1="0" y1="-4" x2="0" y2="4" />
+      <line x1="42" y1="-3" x2="42" y2="3" />
+      <line x1="84" y1="-4" x2="84" y2="4" />
+      <text x="0" y="15">0</text>
+      <text x="84" y="15">2 mi</text>
     </g>
-    <g class="doodle-tree" transform="translate(660 320) scale(.85)">
-      <path d="M 0 0 L -12 22 L 12 22 Z M 0 12 L -16 36 L 16 36 Z" />
-      <line x1="0" y1="36" x2="0" y2="46" />
-    </g>
 
-    <!-- the dashed trail between places -->
-    ${trails}
-
-    <!-- the pins -->
-    ${pins}
-
-    <!-- hand-lettered place name -->
-    <text class="doodle-place" x="${MAP_W / 2}" y="${MAP_H - 30}">~ Bastrop, Texas ~</text>
+    <!-- hand-set place name -->
+    <text class="map-title" x="${MAP_W / 2}" y="${MAP_H - 34}">B A S T R O P · T E X A S</text>
   </svg>`;
+
+// Animate the map in once it scrolls into view.
+const mapEl = document.getElementById('doodlemap');
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) { mapEl.classList.add('is-visible'); io.disconnect(); }
+    });
+  }, { threshold: 0.25 });
+  io.observe(mapEl);
+} else {
+  mapEl.classList.add('is-visible');
+}
 
 /* ------------------------------------------------------------------
    Cards — rendered from the same LOCATIONS array
    ------------------------------------------------------------------ */
 const cardsEl = document.getElementById('cards');
 
-cardsEl.innerHTML = LOCATIONS.map((loc) => {
+cardsEl.innerHTML = LOCATIONS.map((loc, index) => {
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(loc.address)}`;
   const hasSite = loc.website && loc.website !== '#';
   return `
-    <article class="card" data-card="${loc.id}">
-      <div class="card__photo" style="background-image:url('${loc.photo}'); border-bottom-color:${loc.accentColor}"></div>
+    <article class="card" data-card="${loc.id}" style="--accent:${loc.accentColor}">
+      <div class="card__photo" style="background-image:url('${loc.photo}')"></div>
       <div class="card__body">
-        <p class="card__type" style="color:${loc.accentColor}">${loc.type}</p>
+        <p class="card__type"><span>${String(index + 1).padStart(2, '0')}</span>${loc.type}</p>
         <h3 class="card__name">${loc.name}</h3>
         <p class="card__blurb">${loc.blurb}</p>
         <p class="card__addr">${loc.address}</p>
@@ -168,22 +265,32 @@ cardsEl.innerHTML = LOCATIONS.map((loc) => {
 }).join('');
 
 /* ------------------------------------------------------------------
-   Interaction: hovering a card highlights its doodle pin; clicking a
-   card scrolls up to the map and makes that pin pulse.
+   Interaction: hovering a card highlights its map marker; clicking a
+   card scrolls up to the map and makes that marker pulse.
    ------------------------------------------------------------------ */
-function pinEl(id) { return document.querySelector(`.doodle-pin[data-pin="${id}"]`); }
+function markerByID(id) { return document.querySelector(`.map-marker[data-pin="${id}"]`); }
+function contoursByID(id) { return document.querySelectorAll(`.map-contour[data-contour="${id}"]`); }
+function setMapActive(id, isActive) {
+  markerByID(id)?.classList.toggle('map-marker--active', isActive);
+  contoursByID(id).forEach((contour) => contour.classList.toggle('map-contour--active', isActive));
+}
+function clearMapActive() {
+  document.querySelectorAll('.map-marker--active')
+    .forEach(m => m.classList.remove('map-marker--active'));
+  document.querySelectorAll('.map-contour--active')
+    .forEach(c => c.classList.remove('map-contour--active'));
+}
 
 document.querySelectorAll('.card').forEach((card) => {
   const id = card.dataset.card;
 
-  card.addEventListener('mouseenter', () => pinEl(id)?.classList.add('doodle-pin--active'));
-  card.addEventListener('mouseleave', () => pinEl(id)?.classList.remove('doodle-pin--active'));
+  card.addEventListener('mouseenter', () => setMapActive(id, true));
+  card.addEventListener('mouseleave', () => setMapActive(id, false));
 
   card.addEventListener('click', (e) => {
     if (e.target.closest('a')) return;            // let real links work
-    document.querySelectorAll('.doodle-pin--active')
-      .forEach(p => p.classList.remove('doodle-pin--active'));
-    pinEl(id)?.classList.add('doodle-pin--active');
+    clearMapActive();
+    setMapActive(id, true);
     document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 });
