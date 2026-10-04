@@ -1,5 +1,5 @@
 /* ============================================================
-   The Eden Family — hub styles
+   Eden — hub styles
    Editorial monochrome (after storehousebastrop.com) + warm accent
    ============================================================ */
 
@@ -185,9 +185,9 @@ a { color: inherit; }
   font-family: var(--display);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: .12em;
   line-height: .88;
-  font-size: clamp(64px, 10vw, 128px);
+  font-size: clamp(84px, 12vw, 168px);
   margin: 0;
   max-width: 780px;
 }
@@ -707,8 +707,8 @@ a { color: inherit; }
   .nav__links a { font-size: 11px; }
   .hero__sub { font-size: 16px; }
   .hero__mark {
-    font-size: clamp(52px, 17vw, 72px);
-    letter-spacing: .06em;
+    font-size: clamp(72px, 26vw, 112px);
+    letter-spacing: .1em;
   }
   .hero__strip { gap: 8px; grid-template-rows: 132px 132px; }
   .hero__ledger span { padding: 14px 16px; }

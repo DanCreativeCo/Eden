@@ -1,5 +1,5 @@
 /* ============================================================
-   The Eden Family — hub logic
+   Eden — hub logic
    One data array drives BOTH the map pins and the location cards.
    ============================================================ */
 
