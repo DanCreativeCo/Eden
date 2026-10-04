@@ -1,4 +1,4 @@
-# Eden Family Hub — Design Spec (POC)
+# Eden Hub — Design Spec (POC)
 
 **Date:** 2026-06-04
 **Status:** Approved (design); pending implementation plan
@@ -6,7 +6,7 @@
 
 ## Summary
 
-A single-page static "family brand hub" for one client's three businesses:
+A single-page static "brand hub" for one client's three businesses:
 
 - **Storehouse Market & Eatery** — restaurant / market (flagship; 813 Main Street, Bastrop, TX)
 - **Eden East Farms** — farm
@@ -16,7 +16,7 @@ The hub tells the parent-brand story and presents the three locations on an inte
 
 ## Goals
 
-- Show all three businesses as one cohesive family.
+- Show all three businesses as one cohesive brand.
 - Interactive map with a clickable pin per location.
 - On-brand look that visually matches Storehouse.
 - Trivially deployable and hand-off-able (static files, no build, no API keys).
@@ -33,7 +33,7 @@ The hub tells the parent-brand story and presents the three locations on an inte
 
 | Question | Decision |
 |---|---|
-| Site purpose | Family brand hub (parent story + 3 locations + map) |
+| Site purpose | Brand hub (parent story + 3 locations + map) |
 | Map | Real interactive map — Leaflet + OpenStreetMap (no API key) |
 | Soil to Table location | Placeholder pin for now (all 3 placeholders near Bastrop) |
 | Hub/brand name | Generic placeholder wordmark for now |
@@ -52,9 +52,9 @@ The hub tells the parent-brand story and presents the three locations on an inte
 
 ## Page Structure (top → bottom)
 
-1. **Announcement bar** — thin black strip, letter-spaced uppercase (e.g. "A FARM-TO-TABLE FAMILY · BASTROP, TEXAS").
+1. **Announcement bar** — thin black strip, letter-spaced uppercase (e.g. "FARM TO TABLE · BASTROP, TEXAS").
 2. **Hero** — placeholder wordmark (Oswald condensed uppercase) + tagline + em-dash button that scrolls to the map.
-3. **Brand story** — 2–3 short placeholder paragraphs introducing the family.
+3. **Brand story** — 2–3 short placeholder paragraphs introducing Eden.
 4. **Map** — full-width interactive Leaflet map centered on Bastrop; 3 pins; clicking a pin opens a popup. Pins colored by accent palette to differentiate.
 5. **Location cards** — three cards (one per business): name, type label (Eatery / Farm / Consulting), one-line blurb, address line, "— Get Directions —" (Google Maps link) and "— Visit Site —" link. Hovering a card may highlight its map pin (optional enhancement).
 6. **Footer** — copyright + social placeholders.
