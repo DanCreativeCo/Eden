@@ -446,10 +446,11 @@ a { color: inherit; }
 }
 
 /* labelled markers ----------------------------------------------------- */
-.map-marker { cursor: default; }
+.map-marker { cursor: pointer; }
 .map-marker__pin {
   transform-box: fill-box;
   transform-origin: center bottom;
+  will-change: transform;
   transition: transform .28s cubic-bezier(.2,.8,.3,1.35);
 }
 .is-visible .map-marker__pin {
@@ -551,7 +552,7 @@ a { color: inherit; }
   opacity: .95;
   pointer-events: none;
 }
-.card:hover {
+.card:hover, .card.card--active {
   transform: translateY(-8px);
   border-color: rgba(10,10,10,.18);
   box-shadow: 0 24px 70px rgba(24, 20, 14, .13);
@@ -563,7 +564,7 @@ a { color: inherit; }
   filter: grayscale(.24) saturate(.9) contrast(1.04);
   transition: transform .55s ease, filter .55s ease;
 }
-.card:hover .card__photo {
+.card:hover .card__photo, .card.card--active .card__photo {
   transform: scale(1.035);
   filter: grayscale(0) saturate(1) contrast(1.02);
 }

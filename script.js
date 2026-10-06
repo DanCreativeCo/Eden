@@ -4,49 +4,8 @@
    ============================================================ */
 
 /* ------------------------------------------------------------------
-   👇 THE ONE PLACE TO EDIT.  Everything on the page reads from this.
-   Coordinates are PLACEHOLDERS around Bastrop, TX — swap in real ones.
-   Fields: id, name, type, blurb, lat, lng, address, website,
-           accentColor (pin + card color), photo (header image URL)
+   The LOCATIONS array is now loaded from data.js
    ------------------------------------------------------------------ */
-const LOCATIONS = [
-  {
-    id: 'storehouse',
-    name: 'Storehouse Market & Eatery',
-    type: 'Market · Eatery',
-    blurb: 'A market and table on Main Street — seasonal plates, a stocked larder, and a room made for lingering.',
-    lat: 30.1105,
-    lng: -97.3155,
-    address: '813 Main Street, Bastrop, TX 78602',
-    website: 'https://storehousebastrop.com',
-    accentColor: '#9C5B3B',   // terracotta
-    photo: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=700&q=80',
-  },
-  {
-    id: 'eden-east',
-    name: 'Eden East Farms',
-    type: 'The Farm',
-    blurb: 'Where it all begins. A working farm just outside town, growing the produce that fills our tables.',
-    lat: 30.1432,
-    lng: -97.2789,
-    address: 'Near Bastrop, TX · address coming soon',
-    website: '#',
-    accentColor: '#6B7A4F',   // olive
-    photo: 'https://images.unsplash.com/photo-1500076656116-558758c991c1?w=700&q=80',
-  },
-  {
-    id: 'soil-to-table',
-    name: 'Soil to Table',
-    type: 'Consulting',
-    blurb: 'Helping other growers and kitchens close the loop — from soil health to the plate, the way we do it.',
-    lat: 30.0978,
-    lng: -97.3402,
-    address: 'Bastrop, TX · by appointment',
-    website: '#',
-    accentColor: '#0A0A0A',   // ink
-    photo: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=700&q=80',
-  },
-];
 
 /* ------------------------------------------------------------------
    Illustrated map
@@ -267,31 +226,69 @@ cardsEl.innerHTML = LOCATIONS.map((loc, index) => {
 /* ------------------------------------------------------------------
    Interaction: hovering a card highlights its map marker; clicking a
    card scrolls up to the map and makes that marker pulse.
+   Hovering/clicking a map marker highlights the card and scrolls to it.
    ------------------------------------------------------------------ */
 function markerByID(id) { return document.querySelector(`.map-marker[data-pin="${id}"]`); }
 function contoursByID(id) { return document.querySelectorAll(`.map-contour[data-contour="${id}"]`); }
+
 function setMapActive(id, isActive) {
   markerByID(id)?.classList.toggle('map-marker--active', isActive);
   contoursByID(id).forEach((contour) => contour.classList.toggle('map-contour--active', isActive));
 }
+
+function setCardActive(id, isActive) {
+  const card = document.querySelector(`.card[data-card="${id}"]`);
+  if (card) {
+    card.classList.toggle('card--active', isActive);
+  }
+}
+
 function clearMapActive() {
   document.querySelectorAll('.map-marker--active')
     .forEach(m => m.classList.remove('map-marker--active'));
   document.querySelectorAll('.map-contour--active')
     .forEach(c => c.classList.remove('map-contour--active'));
+  document.querySelectorAll('.card--active')
+    .forEach(c => c.classList.remove('card--active'));
 }
 
 document.querySelectorAll('.card').forEach((card) => {
   const id = card.dataset.card;
 
-  card.addEventListener('mouseenter', () => setMapActive(id, true));
-  card.addEventListener('mouseleave', () => setMapActive(id, false));
+  card.addEventListener('mouseenter', () => { setMapActive(id, true); setCardActive(id, true); });
+  card.addEventListener('mouseleave', () => { setMapActive(id, false); setCardActive(id, false); });
 
   card.addEventListener('click', (e) => {
     if (e.target.closest('a')) return;            // let real links work
     clearMapActive();
     setMapActive(id, true);
+    setCardActive(id, true);
     document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+});
+
+// Map marker interactivity
+document.querySelectorAll('.map-marker').forEach((marker) => {
+  const id = marker.dataset.pin;
+
+  marker.addEventListener('mouseenter', () => {
+    setMapActive(id, true);
+    setCardActive(id, true);
+  });
+  
+  marker.addEventListener('mouseleave', () => {
+    setMapActive(id, false);
+    setCardActive(id, false);
+  });
+
+  marker.addEventListener('click', () => {
+    clearMapActive();
+    setMapActive(id, true);
+    setCardActive(id, true);
+    const card = document.querySelector(`.card[data-card="${id}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   });
 });
 
